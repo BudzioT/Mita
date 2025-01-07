@@ -36,7 +36,7 @@ impl AI {
 
         let client = reqwest::Client::new();
         let res = client
-            .post(format!("https://api.cloudflare.com/client/v4/accounts/{}/ai/run/{}", self.user_id, self.api_token))
+            .post(format!("https://api.cloudflare.com/client/v4/accounts/{}/ai/run/{}", self.user_id, self.model))
             .header("Authorization", format!("Bearer {}", self.api_token))
             .json(&inputs)
             .send()
