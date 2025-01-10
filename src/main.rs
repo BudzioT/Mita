@@ -2,7 +2,7 @@ use dotenv;
 use std::io::stdin;
 
 mod ai;
-
+mod transcription;
 
 #[tokio::main]
 async fn main() {
