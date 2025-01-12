@@ -1,28 +1,19 @@
-use std::{env, path::PathBuf, process::Command};
+use std::env;
+use std::fs;
+use std::path::Path;
 
 fn main() {
-    let vosk_lib_path = find_vosk_lib().expect("Vosk library not found");
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let target_dir = Path::new(&out_dir).parent().unwrap().parent().unwrap().join("deps");
 
-    println!("cargo:rustc-link-search=native={}", vosk_lib_path.display());
+    fs::create_dir_all(&target_dir).unwrap();
+
+    let dlls = ["libvosk.dll", "libstdc++-6.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll"];
+    for dll in dlls.iter() {
+        fs::copy(format!("./libs/{}", dll), target_dir.join(dll)).unwrap();
+    }
+
+
     println!("cargo:rustc-link-lib=dylib=vosk");
-
-    println!("cargo:rerun-if-env-changed=VOSK_LIB_DIR");
-    println!("cargo:rerun-if-env-changed=VOSK_INCLUDE_DIR")
-}
-
-fn find_vosk_lib() -> Option<PathBuf> {
-    if let Ok(lib_dir) = env::var("VOSK_LIB_DIR") {
-        return Some(PathBuf::from(lib_dir));
-    }
-
-    if cfg!(target_os = "linux") {
-        if let Ok(output) = Command::new("pkg-config").args(&["--variable=libdir", "vosk"]).output() {
-            if output.status.success() {
-                let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                return Some(PathBuf::from(path));
-            }
-        }
-    }
-
-    None
+    println!("cargo:rustc-link-search=./libs");
 }
