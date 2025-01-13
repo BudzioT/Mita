@@ -11,16 +11,16 @@ pub struct AI {
 }
 
 impl AI {
-    pub fn new(api_token: String, user_id: String, model: String, system_prompt: String) -> Self {
+    pub fn new(api_token: &str, user_id: &str, model: &str, system_prompt: &str) -> Self {
         Self {
-            api_token,
-            user_id,
-            model,
-            system_prompt,
+            api_token: api_token.to_string(),
+            user_id: user_id.to_string(),
+            model: model.to_string(),
+            system_prompt: system_prompt.to_string(),
         }
     }
 
-    pub async fn generate(self: &mut Self, prompt: String) -> Result<Value> {
+    pub async fn generate(self: &mut Self, prompt: &str) -> Result<Value> {
         let inputs = json!({
             "messages": [
                 {
@@ -46,11 +46,7 @@ impl AI {
         Ok(result)
     }
 
-    pub fn change_system_prompt(self: &mut Self, system_prompt: String) {
-        self.system_prompt = system_prompt;
-    }
-
-    pub fn change_model(self: &mut Self, model: String) {
-        self.model = model;
+    pub fn change_system_prompt(self: &mut Self, system_prompt: &str) {
+        self.system_prompt = system_prompt.to_string();
     }
 }

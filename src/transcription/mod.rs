@@ -25,7 +25,7 @@ impl Transcription {
             .with_max_sample_rate();
 
         let speech_model = Model::new(model_path.as_str()).expect("Failed to get the model!");
-        let mut recognizer: Recognizer = Recognizer::new(&speech_model, 16000.0).unwrap();
+        let recognizer: Recognizer = Recognizer::new(&speech_model, 16000.0).expect("Couldn't create recognizer");
 
         Self {
             model_path,

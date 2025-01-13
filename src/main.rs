@@ -1,30 +1,28 @@
 use dotenv;
 use std::io::stdin;
-
-mod ai;
-mod transcription;
+use Mita::Mita;
 
 #[tokio::main]
 async fn main() {
-    let mut ai = setup();
+    let mut mita: Mita = setup();
 
     loop {
         println!("Enter a prompt > ");
         let mut prompt = String::new();
         stdin().read_line(&mut prompt).expect("Error getting prompt");
-        println!("{}", format!("Answer: {}", ai.generate(prompt).await.expect("Error getting answer")));
+        println!("{}", format!("Answer: {}", mita.generate(prompt.as_str()).await.as_str()));
     }
 }
 
-fn setup() -> ai::AI {
+fn setup() -> Mita {
     let system_prompt = "You are ExploreAI, an outdoorsman’s expert assistant. Keep answers short.";
 
-    let ai = ai::AI::new(
-        dotenv::var("CF_API_KEY").unwrap(),
-        dotenv::var("CF_USER_ID").unwrap(),
-        String::from("@cf/meta/llama-3-8b-instruct"),
-        String::from(system_prompt),
+    let mita = Mita::new(
+        system_prompt,
+        dotenv::var("CF_API_KEY").expect("Cloudlfare API key not found").as_str(),
+        dotenv::var("CF_USER_ID").expect("Cloudflare user ID not found").as_str(),
+        "@cf/meta/llama-3-8b-instruct",
     );
 
-    ai
+    mita
 }
