@@ -1,22 +1,27 @@
 use crate::ai::AI;
+use crate::transcription::Transcription;
 
 mod ai;
 mod transcription;
 
 pub struct Mita {
     ai: AI,
+    transcription: Transcription,
 }
 
 impl Mita {
     pub fn new(system_prompt: &str, cloudflare_api_key: &str, cloudflare_user_id: &str,
-    model: &str) -> Self {
+    ai_model: &str, vosk_model: &str) -> Self {
         Self {
             ai: AI::new(
                 cloudflare_api_key,
                 cloudflare_user_id,
-                model,
+                ai_model,
                 system_prompt,
             ),
+            transcription: Transcription::new(
+                vosk_model
+            )
         }
     }
 

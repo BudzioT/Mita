@@ -13,6 +13,11 @@ fn main() {
         fs::copy(format!("./libs/{}", dll), target_dir.join(dll)).unwrap();
     }
 
+    let output_dir = Path::new(&out_dir).parent().unwrap().parent().unwrap().parent().unwrap();
+    for dll in dlls.iter() {
+        fs::copy(format!("./libs/{}", dll), output_dir.join(dll)).unwrap();
+    }
+
 
     println!("cargo:rustc-link-lib=dylib=vosk");
     println!("cargo:rustc-link-search=./libs");

@@ -22,6 +22,7 @@ fn setup() -> Mita {
         dotenv::var("CF_API_KEY").expect("Cloudlfare API key not found").as_str(),
         dotenv::var("CF_USER_ID").expect("Cloudflare user ID not found").as_str(),
         "@cf/meta/llama-3-8b-instruct",
+        "../../data/models/vosk-model-en-us-0.22",
     );
 
     mita
