@@ -6,6 +6,7 @@ use Mita::Mita;
 async fn main() {
     let mut mita: Mita = setup();
 
+    // Listen, send the message, get the answer, read it aloud - simple
     loop {
         println!("Enter a prompt > ");
         let mut prompt = String::new();
@@ -17,12 +18,13 @@ async fn main() {
 fn setup() -> Mita {
     let system_prompt = "You are ExploreAI, an outdoorsman’s expert assistant. Keep answers short.";
 
+    // Hardcoding the paths cause why not, change it if you want...
     let mita = Mita::new(
         system_prompt,
         dotenv::var("CF_API_KEY").expect("Cloudlfare API key not found").as_str(),
         dotenv::var("CF_USER_ID").expect("Cloudflare user ID not found").as_str(),
         "@cf/meta/llama-3-8b-instruct",
-        "../../data/models/vosk-model-en-us-0.22",
+        "C:/Users/Bartosz/RustProjects/Mita/data/models/vosk-model-en-us-0.22",
     );
 
     mita

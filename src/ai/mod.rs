@@ -3,6 +3,7 @@ use anyhow::Result;
 use reqwest;
 
 
+// Literally AI, just AI wrapper...
 pub struct AI {
     api_token: String,
     user_id: String,
@@ -20,6 +21,7 @@ impl AI {
         }
     }
 
+    // Just try to get an answer from cloudflare Llama by HTTP request
     pub async fn generate(self: &mut Self, prompt: &str) -> Result<Value> {
         let inputs = json!({
             "messages": [

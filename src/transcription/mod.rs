@@ -5,6 +5,7 @@ use cpal::traits::{DeviceTrait, HostTrait};
 use vosk;
 use vosk::{Model, Recognizer};
 
+// Struct to magically turn voice into text
 pub struct Transcription {
     model_path: String,
     model: Model,
@@ -28,6 +29,8 @@ impl Transcription {
             .with_max_sample_rate();
          */
 
+        // Get config of your device, try to get mono channel one if possible
+        // Grab the one with max sample rate, 16k seems to fail
         let config = match device.supported_input_configs()
             .expect("Input device with correct config not found")
             .find(|config| config.channels() == 1)
@@ -57,16 +60,19 @@ impl Transcription {
         }
     }
 
+    // Start invading privacy and listening to your microphone, convert speech to text
     pub fn start_stream(self: Self) -> Stream {
         let recognizer = self.recognizer.clone();
 
         let stream = self.device.build_input_stream(
             &self.config.config(),
             move |data: &[f32], _: &cpal::InputCallbackInfo| {
+                // Just convert samples data f32 to i16
                 let samples: Vec<i16> = data.iter()
                     .map(|&x| (x * 32768.0) as i16)
                     .collect();
 
+                // Get the recognizer and grab results for some time
                 if let Ok(mut rec) = recognizer.lock() {
                     rec.accept_waveform(&samples).expect("Couldn't accept waveform");
 
@@ -76,6 +82,8 @@ impl Transcription {
                     }
                     let result = rec.final_result();
 
+                    // Not sure what's the difference between single and multiple results of text
+                    // But just use them
                     match result {
                         vosk::CompleteResult::Single(single) => {
                             if !single.text.is_empty() {

@@ -4,12 +4,14 @@ use crate::transcription::Transcription;
 mod ai;
 mod transcription;
 
+// Your helpful as heck AI waifu, enjoy!
 pub struct Mita {
     ai: AI,
     transcription: Transcription,
 }
 
 impl Mita {
+    // Create a new Mita, unlimited waifu production...
     pub fn new(system_prompt: &str, cloudflare_api_key: &str, cloudflare_user_id: &str,
     ai_model: &str, vosk_model: &str) -> Self {
         Self {
@@ -25,6 +27,7 @@ impl Mita {
         }
     }
 
+    // Just poke her about an answer to your message
     pub async fn generate(self: &mut Self, user_prompt: &str) -> String {
         let response = self.ai.generate(user_prompt).await.expect("Couldn't generate AI's response");
         if response["success"] == false {
