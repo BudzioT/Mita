@@ -7,7 +7,7 @@ mod transcription;
 // Your helpful as heck AI waifu, enjoy!
 pub struct Mita {
     ai: AI,
-    transcription: Transcription,
+    pub transcription: Transcription,
 }
 
 impl Mita {

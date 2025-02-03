@@ -29,6 +29,7 @@ impl Transcription {
             .with_max_sample_rate();
          */
 
+        /*
         // Get config of your device, try to get mono channel one if possible
         // Grab the one with max sample rate, 16k seems to fail
         let config = match device.supported_input_configs()
@@ -46,9 +47,51 @@ impl Transcription {
                 default_config
             },
         };
+        */
+
+        // Print all available configurations for debugging
+        println!("Available input configurations:");
+        for config in device.supported_input_configs()
+            .expect("Error getting supported configs")
+        {
+            println!("  Channels: {}", config.channels());
+            println!("  Sample rate range: {} - {} Hz",
+                     config.min_sample_rate().0,
+                     config.max_sample_rate().0);
+            println!("  Sample format: {:?}", config.sample_format());
+            println!("---");
+        }
+
+        // Try to find a working configuration, being more flexible
+        let config = device.supported_input_configs()
+            .expect("Error getting supported configs")
+            .find(|config| {
+                // Accept any number of channels and any sample format
+                config.min_sample_rate().0 <= 16000 &&
+                    config.max_sample_rate().0 >= 16000
+            })
+            .map(|config| config.with_sample_rate(cpal::SampleRate(16000)))
+            .unwrap_or_else(|| {
+                // Fallback: just get the default config
+                println!("Couldn't find ideal 16kHz config, falling back to default");
+                device.supported_input_configs()
+                    .expect("Error getting supported configs")
+                    .next()
+                    .expect("No input configs available")
+                    .with_sample_rate(cpal::SampleRate(44100))
+            });
+
+        println!("Selected configuration:");
+        println!("  Channels: {}", config.channels());
+        println!("  Sample rate: {} Hz", config.sample_rate().0);
+        println!("  Sample format: {:?}", config.sample_format());
 
         let speech_model = Model::new(model_path).expect("Failed to get the model!");
         let recognizer: Arc<Mutex<Recognizer>> = Arc::new(Mutex::new(Recognizer::new(&speech_model, 16000.0).expect("Couldn't create recognizer")));
+
+        // Set words configuration to get more partial results
+        recognizer.lock().unwrap().set_words(true);
+        recognizer.lock().unwrap().set_max_alternatives(3);
 
         Self {
             model_path: model_path.to_string(),
@@ -63,39 +106,77 @@ impl Transcription {
     // Start invading privacy and listening to your microphone, convert speech to text
     pub fn start_stream(self: Self) -> Stream {
         let recognizer = self.recognizer.clone();
+        let mut buffer = Vec::new();
+        let sample_rate = self.config.sample_rate().0;
+
+        let channels = self.config.channels() as usize;
+
+        // Add volume monitoring
+        let mut max_volume = 0.0f32;
+        let mut samples_since_last_print = 0;
 
         let stream = self.device.build_input_stream(
             &self.config.config(),
             move |data: &[f32], _: &cpal::InputCallbackInfo| {
+                let current_max = data.iter().map(|&x| x.abs()).fold(0.0f32, f32::max);
+                max_volume = max_volume.max(current_max);
+                samples_since_last_print += data.len();
+
+                // Print volume levels every second
+                if samples_since_last_print >= sample_rate as usize {
+                    println!("Current max volume: {:.2}", max_volume);
+                    max_volume = 0.0;
+                    samples_since_last_print = 0;
+                }
+
                 // Just convert samples data f32 to i16
-                let samples: Vec<i16> = data.iter()
-                    .map(|&x| (x * 32768.0) as i16)
-                    .collect();
+                let samples: Vec<i16> = if channels > 1 {
+                    data.chunks(channels)
+                        .map(|chunk| {
+                            let avg = chunk.iter().sum::<f32>() / channels as f32;
+                            // Amplify the signal slightly
+                            ((avg * 1.5).max(-1.0).min(1.0) * 32767.0) as i16
+                        })
+                        .collect()
+                } else {
+                    data.iter()
+                        .map(|&x| ((x * 1.5).max(-1.0).min(1.0) * 32767.0) as i16)
+                        .collect()
+                };
 
-                // Get the recognizer and grab results for some time
-                if let Ok(mut rec) = recognizer.lock() {
-                    rec.accept_waveform(&samples).expect("Couldn't accept waveform");
+                buffer.extend(samples);
 
-                    let partial = rec.partial_result();
-                    if !partial.partial.is_empty() {
-                        println!("Partial {}", partial.partial);
-                    }
-                    let result = rec.final_result();
+                if buffer.len() >= sample_rate as usize / 4 {
+                    // Get the recognizer and grab results for some time
+                    if let Ok(mut rec) = recognizer.lock() {
+                        if let Err(e) = rec.accept_waveform(&buffer) {
+                            eprintln!("Error processing waveform: {}", e);
+                        }
 
-                    // Not sure what's the difference between single and multiple results of text
-                    // But just use them
-                    match result {
-                        vosk::CompleteResult::Single(single) => {
-                            if !single.text.is_empty() {
-                                println!("Final (single): {}", single.text);
+                        let partial = rec.partial_result();
+                        if !partial.partial.is_empty() {
+                            println!("Partial {}", partial.partial);
+                        }
+                        let result = rec.final_result();
+                        //println!("{:?}", result);
+
+                        // Not sure what's the difference between single and multiple results of text
+                        // But just use them
+                        match result {
+                            vosk::CompleteResult::Single(single) => {
+                                if !single.text.is_empty() {
+                                    println!("Final (single): {}", single.text);
+                                }
+                            }
+
+                            vosk::CompleteResult::Multiple(multiple) => {
+                                for result in multiple.alternatives.iter() {
+                                    println!("Final (multiple): {} (conf: {})", result.text, result.confidence);
+                                }
                             }
                         }
 
-                        vosk::CompleteResult::Multiple(multiple) => {
-                            for result in multiple.alternatives.iter() {
-                                println!("Final (multiple): {} (conf: {})", result.text, result.confidence);
-                            }
-                        }
+                        buffer.clear();
                     }
                 }
             },
