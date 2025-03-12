@@ -10,4 +10,5 @@ Current goals to do:<br>
 - Automate some tasks
 - Provide ability to view screen for AI
 - Link it to YT/Twitch chat
+- Allow it to post social media things
 </pre>
