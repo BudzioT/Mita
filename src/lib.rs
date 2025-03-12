@@ -5,13 +5,13 @@ mod ai;
 mod transcription;
 
 // Your helpful as heck AI waifu, enjoy!
-pub struct Mita {
+pub struct Airi {
     ai: AI,
     transcription: Transcription,
 }
 
-impl Mita {
-    // Create a new Mita, unlimited waifu production...
+impl Airi {
+    // Create a new Airi, unlimited waifu production...
     pub fn new(system_prompt: &str, cloudflare_api_key: &str, cloudflare_user_id: &str,
     ai_model: &str, vosk_model: &str) -> Self {
         Self {
