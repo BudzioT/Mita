@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 pub struct Ai {
     groq_key: String,
     chat_history: Vec<Message>,
+    token_estimation: i32,
+    summaries: Vec<String>,
 }
 
 impl Ai {
@@ -18,6 +20,8 @@ impl Ai {
         Ai {
             groq_key,
             chat_history: vec![starting_history],
+            token_estimation: 0,
+            summaries: vec![],
         }
     }
 
@@ -25,7 +29,7 @@ impl Ai {
     pub async fn get_answer(&mut self, prompt: String) -> String {
         // Some consts for nice look
         const URL: &str = "https://api.groq.com/openai/v1/chat/completions";
-        const MODEL: &str = "llama3-70b-8192";
+        const MODEL: &str = "llama-3.2-3b-preview";
         let msg: Message = Message {
             role: "user".to_string(),
             content: prompt,
@@ -81,3 +85,8 @@ pub struct Message {
 // Let's say we set a limit of 7k tokens, then once it was reached, summarize the oldest message to free up 2k tokens
 // Editing the first system prompt and adding a summary to it, with needed indication seems like the best idea
 // Just remember not to delete the system prompt by mistake ; p
+
+// Wait but if 7k per minute is the limit, I will be only able to make one request...
+// Let's limit it at 1k, tell AI to keep messages short to max ~50 words and summarize them hard
+// Also if Groq works that way - then making a fallback to another model to free of limits, might be helpful (500 TPD)
+// If we get answer with limit reached, let's change the model, saving the previous message nevertheless and sending req again
