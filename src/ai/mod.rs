@@ -75,3 +75,9 @@ pub struct Message {
     pub role: String,
     pub content: String,
 }
+
+// I need to implement token limits and chat history summarization. Seems like 1 word is around 3-4 tokens
+// (going with 4 for safety)
+// Let's say we set a limit of 7k tokens, then once it was reached, summarize the oldest message to free up 2k tokens
+// Editing the first system prompt and adding a summary to it, with needed indication seems like the best idea
+// Just remember not to delete the system prompt by mistake ; p
