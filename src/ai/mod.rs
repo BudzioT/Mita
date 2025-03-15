@@ -88,5 +88,5 @@ pub struct Message {
 
 // Wait but if 7k per minute is the limit, I will be only able to make one request...
 // Let's limit it at 1k, tell AI to keep messages short to max ~50 words and summarize them hard
-// Also if Groq works that way - then making a fallback to another model to free of limits, might be helpful (500 TPD)
+// Also if Groq works that way - then making a fallback to another model to free of limits, might be helpful (500k TPD)
 // If we get answer with limit reached, let's change the model, saving the previous message nevertheless and sending req again
